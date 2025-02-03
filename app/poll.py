@@ -50,6 +50,74 @@ class Poll(Cog):
         }
         self.poll = {}
 
+    async def get_wait_time(self, day_name: str, *time: int, log_message: str = None):
+        """
+        Waits until the next specified day of the week at the given time.
+        Example:
+            await get_wait_time("Monday", 20)  # Waits until the next Monday at 8:00 PM
+            log_message (str, optional): A message to log when waiting. Defaults to None.
+            tuple: A tuple containing the timestamp of the next target day and the wait 
+            time in seconds.
+        Args:
+            day_name (str): The name of the day to wait for (e.g., "Monday").
+            time (int): The time to wait for in 24-hour format (e.g., 20 for 8 PM).
+            log_message (str, optional): A message to log when waiting. Defaults to None.
+
+        Returns:
+            timestamp (int): The timestamp of the next target day.
+            wait_time (float): The time to wait in seconds.
+        """
+        # now = datetime.datetime.now()
+        # target_time = now.replace(hour=20, minute=0, second=0, microsecond=0)  # 8:00 PM
+
+        # await self.wait_until_next_day("Saturday", 20)
+
+        # # If today is not Saturday, find the next one
+        # days_until_saturday = (5 - now.weekday()) % 7  # 5 = Saturday (Monday is 0)
+        # target_time += datetime.timedelta(days=days_until_saturday)
+
+        # Time to wait until next Saturday 8 PM
+        # wait_time = (target_time - now).total_seconds()
+        # log(f"Waiting until {target_time} for next poll result...")
+
+        days_of_week = ["monday", "tuesday", "wednesday",
+                        "thursday", "friday", "saturday", "sunday"]
+        target_daytime = days_of_week.index(day_name.lower())
+        now = datetime.datetime.now()
+        days_until_target = (target_daytime - now.weekday() + 7) % 7
+        next_target_day = now + datetime.timedelta(days=days_until_target)
+
+        if time:
+            next_target_day = next_target_day.replace(
+                hour=time[0], minute=0, second=0, microsecond=0)
+        else:
+            next_target_day = next_target_day.replace(
+                hour=0, minute=0, second=0, microsecond=0)
+
+        wait_time = (next_target_day - now).total_seconds()
+
+        # wait_time = (target_daytime - now).total_seconds()
+        log(f"Waiting until {next_target_day} "
+            f"{ ' for ' + log_message if log_message is not None else ''}")
+
+        timestamp = int(next_target_day.timestamp())
+        return timestamp, wait_time
+
+
+    async def wait_until(self, wait_time: float):
+        """
+        Waits for a specified amount of time in seconds.
+
+        Args:
+            wait_time (float): The time to wait in seconds.
+
+        Returns:
+            None
+        """
+        log(f"Waiting for {wait_time} seconds...")
+        await asyncio.sleep(wait_time)
+        log("Wait Done")
+
     @command(name="pollresult")
     async def check_poll_results(self, ctx):
         """
@@ -115,18 +183,6 @@ class Poll(Cog):
         Returns:
             None
         """
-        # while True:
-        now = datetime.datetime.now()
-        target_time = now.replace(hour=20, minute=0, second=0, microsecond=0)  # 8:00 PM
-
-        # If today is not Saturday, find the next one
-        days_until_saturday = (5 - now.weekday()) % 7  # 5 = Saturday (Monday is 0)
-        target_time += datetime.timedelta(days=days_until_saturday)
-
-        # Time to wait until next Saturday 8 PM
-        wait_time = (target_time - now).total_seconds()
-        log(f"Waiting until {target_time} for next poll result...")
-
         # Check results for all channels with active polls
         for channel_id, message_id in self.poll.items():
             channel = self.bot.get_channel(channel_id)
@@ -138,11 +194,9 @@ class Poll(Cog):
             except NotFound:
                 continue  # Skip if poll message was deleted
 
-        timestamp = int(target_time.timestamp())
+        timestamp, wait_time = await self.get_wait_time("Saturday", 20, log_message=" next poll results")
         await channel.send(f"Poll results will be announced <t:{timestamp}:R>")
-
-        await asyncio.sleep(wait_time)  # Wait until Saturday 8 PM
-
+        await self.wait_until(wait_time)
 
         # Count reactions (subtract 1 to ignore bot's reaction)
         reactions = {reaction.emoji: reaction.count - 1 for reaction in poll_message.reactions}
@@ -167,8 +221,6 @@ class Poll(Cog):
 
         await channel.send(embed=results_embed)
 
-        # await asyncio.sleep(86400)  # Wait 24 hours before checking again to avoid double results
-
     async def send_spooky_saturday(self):
         """
         Sends a "Happy Spooky Saturday!" message to a specific Discord channel if today is Saturday.
@@ -184,26 +236,17 @@ class Poll(Cog):
         """
         while True:
             log("Checking for Spooky Saturday... " + str(datetime.date.today().weekday()))
-            # print(f"{BColour.BLACK}{datetime.datetime.now()}{BColour.OFF} "
-            #     f"{BColour.CYAN}APP{BColour.OFF} Checking for Spooky Saturday... " +
-            #     str(datetime.date.today().weekday()))
 
-            now = datetime.datetime.now()
-            next_monday = now + datetime.timedelta(days=(7 - now.weekday()) % 7)  # Find next Monday
-            next_monday = next_monday.replace(hour=0,
-                minute=0, second=0, microsecond=0)  # Set to midnight
-            wait_time = (next_monday - now).total_seconds()
+            wait_time = await self.get_wait_time("Monday", log_message="next poll")
+            await self.wait_until(wait_time[1])
 
-            await asyncio.sleep(wait_time)  # Wait until Monday
-
-            # channel = self.bot.get_channel(1114128548895129631)
             today = datetime.date.today()
             next_saturday = today + datetime.timedelta((5 - today.weekday() + 7) % 7)
 
             message = None
             poll_channel = None
 
-            for channel in self.bot.guilds[0].text_channels:
+            for channel in self.bot.guilds[1].text_channels:
                 if channel.name == "spooky-saturday":
                     log(f"Found spooky-saturday channel in {self.bot.guilds[0].name}. "
                         "Sending Message...")

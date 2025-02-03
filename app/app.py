@@ -31,7 +31,7 @@ async def send_help(ctx):
     await ctx.send("Hello! I'm the Spooky Saturday bot. "
                 "I can help you with the Spooky Saturday poll. "
                 "Polls are held every Monday and the results are announced on Saturday at 8pm. "
-                "You May reannounce the results by using the !pollresult command. ")
+                "You may reannounce the results by using the !pollresult command. ")
 
 @bot.event
 async def on_ready():
