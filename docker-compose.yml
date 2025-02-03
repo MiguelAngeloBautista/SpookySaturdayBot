@@ -5,5 +5,3 @@ services:
     build: .
     environment:
       - BOT_TOKEN=${BOT_TOKEN}
-    ports:
-      - "80:80"

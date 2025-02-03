@@ -13,8 +13,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the application code into the container
 COPY . .
 
-# Make port 80 available to the world outside this container
-EXPOSE 80
+# # Make port 80 available to the world outside this container
+# EXPOSE 80
 
 # Define environment variable
 ENV BOT_TOKEN=your_token_here
