@@ -108,7 +108,7 @@ class Poll(Cog):
         await asyncio.sleep(wait_time)
         log("APP", "Wait done... Continuing")
         
-    async def get_poll_message(self) -> Message:
+    async def get_poll_message(self, ctx: Context = None) -> Message:
         """
         This function retrieves the poll message from the specified Discord channel
         and stores the message ID in the poll attribute.
@@ -119,10 +119,13 @@ class Poll(Cog):
         ### Returns:
             `poll_message (discord.Message)`: The poll message from the specified Discord channel.
         """
+        poll_message = None
         for channel_id, message_id in self.poll.items():
             channel = self.bot.get_channel(channel_id)
             if not channel:
                 continue  # Skip if channel is unavailable
+            if ctx is not None and channel.guild != ctx.guild:
+                continue  # Skip if channel is in a different guild only if ctx is provided
 
             try:
                 poll_message = await channel.fetch_message(message_id)
@@ -177,7 +180,10 @@ class Poll(Cog):
         ### Returns:
             None
         """
-        poll_message: Message = await self.get_poll_message()
+        poll_message: Message = await self.get_poll_message(ctx)
+        if poll_message is None:
+            await ctx.send("No active poll found.")
+            return
         result_text = await self.calculate_results(poll_message)
 
         results_embed = Embed(title="Spooky Saturday Poll Results",
