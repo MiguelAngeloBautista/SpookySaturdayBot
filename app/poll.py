@@ -264,7 +264,7 @@ class Poll(Cog):
                         "Please check the pinned messages for game info, prices and sales. "
                         "Please feel free to recommend games 😊 "
                         "\n\n(Chosen game will be decided by 8pm)\n\n"
-                        f"{'\n'.join(self.options.keys())}")
+                        f"{'\n'.join(self.options.keys())}") # noqa: E999
                     self.poll[channel.id] = message.id
                     poll_channel = channel
 
