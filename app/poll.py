@@ -8,7 +8,7 @@ import asyncio
 from discord.ext.commands import Cog, command, Context, Bot
 from discord import Embed, NotFound, Message, TextChannel
 
-from logger import log
+from logger import INFO_LOG
 
 class Poll(Cog):
     """
@@ -88,7 +88,7 @@ class Poll(Cog):
 
         wait_time = (next_target_day - now).total_seconds()
 
-        log("APP", f"Waiting until {next_target_day} "
+        INFO_LOG(f"Waiting until {next_target_day} "
             f"{'for ' + log_message if log_message is not None else ''}")
 
         timestamp = int(next_target_day.timestamp())
@@ -104,10 +104,10 @@ class Poll(Cog):
         ### Returns:
             None
         """
-        log("APP", f"Waiting for {wait_time} seconds...")
+        INFO_LOG(f"Waiting for {wait_time} seconds...")
         await asyncio.sleep(wait_time)
-        log("APP", "Wait done... Continuing")
-        
+        INFO_LOG("Wait done... Continuing")
+
     async def get_poll_message(self, ctx: Context = None) -> Message:
         """
         This function retrieves the poll message from the specified Discord channel
@@ -241,7 +241,7 @@ class Poll(Cog):
             next_saturday = None
 
             if not bypass:
-                log("APP", "Checking for Spooky Saturday... " +
+                INFO_LOG("Checking for Spooky Saturday... " +
                     str(datetime.date.today().weekday()))
 
                 wait_time = await self.get_wait_time("Monday", log_message="next poll")
@@ -250,13 +250,13 @@ class Poll(Cog):
                 today = datetime.date.today()
                 next_saturday = today + datetime.timedelta((5 - today.weekday() + 7) % 7)
             else:
-                log("APP", "Bypassing date-time Check...")
+                INFO_LOG("Bypassing date-time Check...")
 
             message = None
             poll_channel = None
             for channel in self.bot.guilds[self.GUILD_INDEX].text_channels:
                 if channel.name == "spooky-saturday":
-                    log("APP", f"Found spooky-saturday channel in {self.bot.guilds[0].name}. "
+                    INFO_LOG(f"Found spooky-saturday channel in {self.bot.guilds[0].name}. "
                         "Sending Message...")
 
                     message = await channel.send(

@@ -8,9 +8,10 @@ from dotenv import load_dotenv
 from discord import Intents
 from discord.ext import commands
 from discord.ext.commands import Context
+from colorist import BrightColor as BColour
 
 from poll import Poll
-from logger import log
+from logger import INFO_LOG, WARN_LOG
 
 TESTING: bool = True # Set to False when deploying to production. Changes guild to 0, bypasses date time check pylint: disable=C0301
 
@@ -41,7 +42,7 @@ async def on_ready():
     """
     Event handler for the bot's on_ready event.
     """
-    log("APP", f"Logged in as {bot.user.name} at {[guild.name for guild in bot.guilds]}")
+    INFO_LOG(f"Logged in as {bot.user.name} at {[guild.name for guild in bot.guilds]}")
     await bot.add_cog(Poll(bot, TESTING))
     poll = bot.get_cog('Poll')
     bot.loop.create_task(poll.send_spooky_saturday(TESTING))
@@ -50,14 +51,15 @@ async def on_ready():
 if __name__ == "__main__":
     load_dotenv()
 
-    log("APP", "Starting Spooky Saturday Bot")
-    
+    INFO_LOG("Starting Spooky Saturday Bot")
+
     if TESTING:
-        log("APP", "Running in testing mode. GUILD_INDEX set to 0. Bypassing date-time check.")
+        WARN_LOG(f"Running in {BColour.RED}TESTING MODE{BColour.OFF}. "
+                 "GUILD_INDEX set to 0. Bypassing date-time check.", context="SERVER")
 
     if "BOT_TOKEN" in os.environ:
         bot.run(os.getenv("BOT_TOKEN"))
 
     else:
-        log("APP", "BOT_TOKEN not found in environment variables. Exiting.")
+        INFO_LOG("BOT_TOKEN not found in environment variables. Exiting.")
         exit()

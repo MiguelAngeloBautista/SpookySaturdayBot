@@ -1,4 +1,4 @@
 # pylint: disable=all
-from .logger import log
+from .logger import INFO_LOG, WARN_LOG, DEBUG_LOG, ERROR_LOG, CRITICAL_LOG, log
 
-log("APP", "Logger imported")
+INFO_LOG("Logger imported", context="SERVER")
