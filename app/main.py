@@ -10,8 +10,8 @@ from discord.ext import commands
 from discord.ext.commands import Context
 from colorist import BrightColor as BColour
 
-from poll import Poll
-from logger import INFO_LOG, WARN_LOG
+from app.poll import Poll
+from app.logger import INFO_LOG, WARN_LOG
 
 TESTING: bool = True # Set to False when deploying to production. Changes guild to 0, bypasses date time check pylint: disable=C0301
 
