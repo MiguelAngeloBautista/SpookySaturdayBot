@@ -60,8 +60,8 @@ class Poll(Cog):
 
         if testing is True:
             self.GUILD_INDEX = 0 # pylint: disable=C0103
-        
-    async def get_wait_time(self, day_name: str, time: int = 0, log_message: str = None) -> tuple[int, float]:
+
+        self.load_poll()
 
     async def get_wait_time(self, day_name: Literal["monday", "tuesday", "wednesday","thursday", "friday", "saturday", "sunday"], time: int = 0, log_message: str = None) -> tuple[int, float]:
         """
@@ -288,7 +288,7 @@ class Poll(Cog):
             if message is None:
                 poll_channel, message = await self.send_new_poll_message(next_saturday)
 
-                    message = await channel.send(
+            self.save_poll()
 
             _, result_wait_time = await self.get_wait_time("Saturday", 20, log_message="next poll results")
             await self.automatic_check_poll_results(wait_time=result_wait_time)
@@ -298,7 +298,7 @@ class Poll(Cog):
 
             if poll_channel is not None:
                 self.poll.pop(poll_channel.id)
-                await self.save_poll()
+                self.save_poll()
 
             ### Use For When Discord decides to allow more than 10 options in a poll ###
             # question = f"Spooky Saturday ({next_saturday.strftime('%d/%m')}): " + \
@@ -363,3 +363,49 @@ class Poll(Cog):
 
                 return channel, message
         return None, None
+    
+    def save_poll(self) -> None:
+        """Saves poll data to polls.json"""
+        try:
+            with open("polls.json", "w") as f:
+                json.dump(self.poll, f)
+                INFO_LOG("Poll data saved successfully")
+
+        except IOError as e:
+            ERROR_LOG(f"Error saving poll data: {e}")
+        except ValueError as e:
+            ERROR_LOG(f"Error parsing JSON: {e}")
+        except Exception as e:
+            ERROR_LOG(f"An unexpected error occurred: {e}")
+
+    def load_poll(self) -> None:
+        """Loads poll data from polls.json"""
+        try:
+            with open("polls.json", "r") as f:
+                self.poll = json.load(f)
+                self.poll = {int(k): v for k, v in self.poll.items()}
+                INFO_LOG("Poll data loaded successfully")
+
+        except FileNotFoundError:
+            ERROR_LOG("No poll data found")
+        except IOError as e:
+            ERROR_LOG(f"Error loading poll data: {e}")
+        except ValueError as e:
+            ERROR_LOG(f"Error parsing JSON: {e}")
+        except Exception as e:
+            ERROR_LOG(f"An unexpected error occurred: {e}")
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+            

@@ -18,6 +18,7 @@ Thumbs.db
 
 # Ignore environment files
 .env
+polls.json
 
 # Ignore Dockerfile and docker-compose files
 Dockerfile
