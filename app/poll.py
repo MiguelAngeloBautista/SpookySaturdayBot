@@ -78,7 +78,6 @@ class Poll(Cog):
             `timestamp (int)`: The timestamp of the next target day in seconds.
             `wait_time (float)`: The time to wait in seconds.
         """
-
         days_of_week = ["monday", "tuesday", "wednesday",
                         "thursday", "friday", "saturday", "sunday"]
         now = datetime.datetime.now()
