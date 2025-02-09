@@ -23,3 +23,5 @@ polls.json
 # Ignore Dockerfile and docker-compose files
 Dockerfile
 docker-compose.yml
+
+app/test
