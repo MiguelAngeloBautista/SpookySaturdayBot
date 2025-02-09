@@ -26,13 +26,13 @@ class Poll(Cog):
         `poll (dict)`: A dictionary mapping channel IDs to message IDs for active polls.
     ### Methods:
         `__init__(self, bot)`:
-            Initializes the Poll class with the bot instance and sets up options and poll attributes.
+            Initializes the Poll class with the bot instance, sets up options and poll attributes, and loads the savefile containting active polls.
         `check_poll_results(self, ctx)`:
             Manually checks the results of the Spooky Saturday poll and sends a message with the results.
         `automatic_check_poll_results(self)`:
             Automatically checks the results of the Spooky Saturday poll every Saturday at 8 PM and sends a message with the results.
         `send_spooky_saturday(self)`:
-            Sends a "Happy Spooky Saturday!" message to a specific Discord channel if today is Saturday.
+            Sends a "Happy Spooky Saturday!" poll message to a specific Discord channel if today is Monday.
     
     """
     GUILD_INDEX = 1 # Guild Index for the bot to send messages to 0 = Testing, 1 = Main
@@ -147,7 +147,7 @@ class Poll(Cog):
     async def calculate_results(self, poll_message: Message) -> str:
         """
         This function calculates the results of the Spooky Saturday poll
-        and returns the winner(s) and the result text.
+        and returns the result text.
 
         ### Args:
             `poll_message (discord.Message)`: The poll message from the specified Discord channel.
@@ -181,17 +181,13 @@ class Poll(Cog):
         return result_text
 
     @command(name="pollresult")
-    async def check_poll_results(self, ctx: Context):
+    async def check_poll_results(self, ctx: Context) -> None:
         """
         Manually check the results of the Spooky Saturday poll 
-        and sends a message with the results.
-
-        This function retrieves the poll results and 
+        and sends a message with the results. This function retrieves the active poll of the server and 
         sends a message with the results to the specified Discord channel.
-
         ### Note:
             This function assumes that the bot instance and the channel ID are correctly set up.
-
         ### Returns:
             None
         """
@@ -353,12 +349,11 @@ class Poll(Cog):
                     f"{'\n'.join(self.options.keys())}") # noqa: E999
                 self.poll[channel.id] = message.id
 
-                # Optimize adding reactions using asyncio.create_task
                 tasks = [asyncio.create_task(message.add_reaction(option)) for option in self.options.values()]
                 await asyncio.gather(*tasks)
                 INFO_LOG(f"Added reactions to message {message.id} in channel {channel.name}")
 
-                timestamp, result_wait_time = await self.get_wait_time("Saturday", 20, log_message="next poll results")
+                timestamp, _ = await self.get_wait_time("Saturday", 20, log_message="next poll results")
                 await channel.send(f"Poll results will be announced <t:{timestamp}:R>")
 
                 return channel, message
