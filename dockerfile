@@ -20,4 +20,4 @@ COPY . .
 ENV BOT_TOKEN=your_token_here
 
 # Run app.py when the container launches
-CMD ["python", "app/app.py"]
+CMD ["python", "app/main.py"]

@@ -362,7 +362,7 @@ class Poll(Cog):
     def save_poll(self) -> None:
         """Saves poll data to polls.json"""
         try:
-            with open("polls.json", "w") as f:
+            with open("./app/saves/polls.json", "w") as f:
                 json.dump(self.poll, f)
                 INFO_LOG("Poll data saved successfully")
 
@@ -376,7 +376,7 @@ class Poll(Cog):
     def load_poll(self) -> None:
         """Loads poll data from polls.json"""
         try:
-            with open("polls.json", "r") as f:
+            with open("./app/saves/polls.json", "r") as f:
                 self.poll = json.load(f)
                 self.poll = {int(k): v for k, v in self.poll.items()}
                 INFO_LOG("Poll data loaded successfully")
