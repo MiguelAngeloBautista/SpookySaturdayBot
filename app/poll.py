@@ -96,7 +96,7 @@ class Poll(Cog):
 
         wait_time = (next_target_day - now).total_seconds()
 
-        INFO_LOG(f"Waiting until {next_target_day} "
+        INFO_LOG(f"[get_wait_time()] Waiting until {next_target_day} "
             f"{'for ' + log_message if log_message is not None else ''}")
 
         timestamp = int(next_target_day.timestamp())
@@ -112,9 +112,9 @@ class Poll(Cog):
         ### Returns:
             None
         """
-        INFO_LOG(f"Waiting for {wait_time} seconds...")
+        INFO_LOG(f"[wait_until()] Waiting for {wait_time} seconds...")
         await asyncio.sleep(wait_time)
-        INFO_LOG("Wait done... Continuing")
+        INFO_LOG("[wait_until()] Wait done... Continuing")
 
     async def get_poll_message(self, ctx: Context = None) -> Message:
         """
@@ -131,16 +131,20 @@ class Poll(Cog):
             `poll_message (discord.Message)`: The poll message from the specified Discord channel.
         """
         poll_message = None
+        INFO_LOG("[get_poll_message()] Getting Poll Message")
         for channel_id, message_id in self.poll.items():
             channel = self.bot.get_channel(channel_id)
             if not channel:
                 continue  # Skip if channel is unavailable
             if ctx is not None and channel.guild != ctx.guild:
                 continue  # Skip if channel is in a different guild only if ctx is provided
+                
+            INFO_LOG(f"[get_poll_message()] Poll Message Found: {channel_id} ({channel.name}):{message_id}")
 
             try:
                 poll_message = await channel.fetch_message(message_id)
             except NotFound:
+                ERROR_LOG(f"[get_poll_message()] Unable to fetch Poll Message from channel: {poll_message.id} | {message_id}  Channel: {channel.id}", "poll.py")
                 continue  # Skip if poll message was deleted
         return poll_message
 
@@ -225,13 +229,13 @@ class Poll(Cog):
         """
         poll_message: Message = await self.get_poll_message()
         if poll_message is None:
-            ERROR_LOG("No active poll found.")
+            ERROR_LOG("[automatic_check_poll_results()] No active poll found.")
             return
         channel: TextChannel = poll_message.channel
         
         if bypass:
             wait_time = 5.0
-            INFO_LOG("Bypassing wait time for poll results check")
+            INFO_LOG("[automatic_check_poll_results()] Bypassing wait time for poll results check")
 
         await self.wait_until(wait_time)
         
@@ -267,7 +271,7 @@ class Poll(Cog):
             next_saturday = None
 
             if not bypass:
-                INFO_LOG("Checking for Spooky Saturday... " +
+                INFO_LOG("[send_spooky_saturday()] Checking for Spooky Saturday... " +
                     str(datetime.date.today().weekday()))
 
                 wait_time = await self.get_wait_time("Monday", log_message="next poll")
@@ -276,7 +280,7 @@ class Poll(Cog):
                 today = datetime.date.today()
                 next_saturday = today + datetime.timedelta((5 - today.weekday() + 7) % 7)
             else:
-                INFO_LOG("Bypassing date-time Check...")
+                INFO_LOG("[send_spooky_saturday()] Bypassing date-time Check...")
 
             message = None
             poll_channel = None
@@ -323,7 +327,7 @@ class Poll(Cog):
                 message_id = self.poll.get(channel.id)
                 message: Message = await channel.fetch_message(message_id)
                 adelaide_time = message.created_at + datetime.timedelta(hours=10.5)  # Convert UTC to Adelaide time (UTC+10:30)
-                INFO_LOG(f"Existing Poll Message: {message_id} made: {adelaide_time.strftime('%d %B %Y %H:%M:%S')} in {channel.name} at {channel.guild.name}")
+                INFO_LOG(f"[check_existing_poll_message()] Existing Poll Message: {message_id} made: {adelaide_time.strftime('%d %B %Y %H:%M:%S')} in {channel.name} at {channel.guild.name}")
                 return channel, message_id
         return None, None
     
@@ -340,7 +344,7 @@ class Poll(Cog):
         """
         for channel in self.bot.guilds[self.GUILD_INDEX].text_channels:
             if channel.name == "spooky-saturday":
-                INFO_LOG(f"Found spooky-saturday channel in {self.bot.guilds[self.GUILD_INDEX].name}. Sending Message...")
+                INFO_LOG(f"[send_new_poll_message()] Found spooky-saturday channel in {self.bot.guilds[self.GUILD_INDEX].name}. Sending Message...")
 
                 message = await channel.send(
                     f"Spooky Saturday ({next_saturday.strftime('%d/%m') if next_saturday is not None else ''}): "
@@ -352,7 +356,7 @@ class Poll(Cog):
 
                 tasks = [asyncio.create_task(message.add_reaction(option)) for option in self.options.values()]
                 await asyncio.gather(*tasks)
-                INFO_LOG(f"Added reactions to message {message.id} in channel {channel.name}")
+                INFO_LOG(f"[send_new_poll_message()] Added reactions to message {message.id} in channel {channel.name}")
 
                 timestamp, _ = await self.get_wait_time("Saturday", 20, log_message="next poll results")
                 await channel.send(f"Poll results will be announced <t:{timestamp}:R>")
@@ -365,14 +369,16 @@ class Poll(Cog):
         try:
             with open("./app/saves/polls.json", "w") as f:
                 json.dump(self.poll, f)
-                INFO_LOG("Poll data saved successfully")
+                INFO_LOG("[save_poll()] Poll data saved successfully")
 
         except IOError as e:
-            ERROR_LOG(f"Error saving poll data: {e}")
+            ERROR_LOG(f"[save_poll()] Error saving poll data: {e}")
+        except TypeError as e:
+            ERROR_LOG(f"[save_poll()] Error serializing poll data: {e}")
         except ValueError as e:
-            ERROR_LOG(f"Error parsing JSON: {e}")
+            ERROR_LOG(f"[save_poll()] Error parsing JSON: {e}")
         except Exception as e:
-            ERROR_LOG(f"An unexpected error occurred: {e}")
+            ERROR_LOG(f"[save_poll()] An unexpected error occurred: {e}")
 
     def load_poll(self) -> None:
         """Loads poll data from polls.json"""
@@ -380,28 +386,13 @@ class Poll(Cog):
             with open("./app/saves/polls.json", "r") as f:
                 self.poll = json.load(f)
                 self.poll = {int(k): v for k, v in self.poll.items()}
-                INFO_LOG("Poll data loaded successfully")
+                INFO_LOG("[load_poll()] Poll data loaded successfully")
 
-        except FileNotFoundError:
-            ERROR_LOG("No poll data found")
+        except FileNotFoundError as e:
+            ERROR_LOG(f"[load_poll()] No poll data found: {e}")
         except IOError as e:
-            ERROR_LOG(f"Error loading poll data: {e}")
+            ERROR_LOG(f"[load_poll()] Error loading poll data: {e}")
         except ValueError as e:
-            ERROR_LOG(f"Error parsing JSON: {e}")
+            ERROR_LOG(f"[load_poll()] Error parsing JSON: {e}")
         except Exception as e:
-            ERROR_LOG(f"An unexpected error occurred: {e}")
-
-
-
-
-
-
-
-
-
-
-
-        
-
-
-            
+            ERROR_LOG(f"[load_poll()] An unexpected error occurred: {e}")         

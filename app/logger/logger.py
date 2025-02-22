@@ -5,12 +5,22 @@ Logger module for the SpookySaturdayBot application.
 from functools import partial
 import logging
 from colorist import BrightColor as BColour
+import inspect
+import os
 
 
 logging.basicConfig(level=logging.INFO,
                     format=f"{BColour.BLACK}%(asctime)s{BColour.OFF}"
                     f" %(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
+
+def get_context() -> str:
+    stack = inspect.stack()
+    for frame_info in stack:
+        filename = os.path.basename(frame_info.filename)
+        if filename != os.path.basename(__file__):
+            return filename
+    return "APP"
 
 def log(message: str, context: str, level=logging.INFO) -> None:
     """
@@ -23,6 +33,9 @@ def log(message: str, context: str, level=logging.INFO) -> None:
     ### Returns:
         None
     """
+    if context is None:
+        context = get_context()
+    
     match level:
         case logging.DEBUG:
             final_message = f"{BColour.GREEN}{logging.getLevelName(level)}{BColour.OFF} " \
@@ -43,8 +56,8 @@ def log(message: str, context: str, level=logging.INFO) -> None:
     logging.log(level, final_message)
 
 # Level Based Partial Functions
-INFO_LOG = partial(log, context="APP", level=logging.INFO)
-WARN_LOG = partial(log, context="APP", level=logging.WARN)
-DEBUG_LOG = partial(log, context="APP", level=logging.DEBUG)
-ERROR_LOG = partial(log, context="APP", level=logging.ERROR)
-CRITICAL_LOG = partial(log, context="APP", level=logging.CRITICAL)
+INFO_LOG = lambda message, context=None: log(message, context=context, level=logging.INFO)
+WARN_LOG = lambda message, context=None: log(message, context=context, level=logging.WARN)
+DEBUG_LOG = lambda message, context=None: log(message, context=context, level=logging.DEBUG)
+ERROR_LOG = lambda message, context=None: log(message, context=context, level=logging.ERROR)
+CRITICAL_LOG = lambda message, context=None: log(message, context=context, level=logging.CRITICAL)
