@@ -230,11 +230,12 @@ class Poll(Cog):
         channel: TextChannel = poll_message.channel
         
         if bypass:
-            wait_time = 0
+            wait_time = 5.0
             INFO_LOG("Bypassing wait time for poll results check")
 
         await self.wait_until(wait_time)
-
+        
+        poll_message: Message = await self.get_poll_message() # Need for data revalidation
         result_text = await self.calculate_results(poll_message)
 
         results_embed = Embed(title="Spooky Saturday Poll Results",
@@ -287,7 +288,7 @@ class Poll(Cog):
             self.save_poll()
 
             _, result_wait_time = await self.get_wait_time("Saturday", 20, log_message="next poll results")
-            await self.automatic_check_poll_results(wait_time=result_wait_time)
+            await self.automatic_check_poll_results(bypass=bypass, wait_time=result_wait_time)
 
             if not bypass:
                 await self.wait_until(86400) # Sleep for a day
