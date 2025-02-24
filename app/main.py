@@ -91,7 +91,7 @@ if __name__ == "__main__":
     INFO_LOG("Starting Spooky Saturday Bot")
 
     if TESTING:
-        WARN_LOG(f"Running in {BColour.RED}TESTING MODE{BColour.OFF}. "
+        WARN_LOG(f"Running in TESTING MODE. "
                  "GUILD_INDEX set to 0. Bypassing date-time check.", context="SERVER")
 
     if "BOT_TOKEN" in os.environ:
