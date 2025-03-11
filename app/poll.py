@@ -54,7 +54,8 @@ class Poll(Cog):
             "Kletka 🛗": "🛗",
             "GTFO 😶": "😶",
             "Factorio ⚙️": "⚙️",
-            "JackBox 📦": "📦"
+            "JackBox 📦": "📦",
+            "REPO 😂": "😂",
         }
         self.poll: dict[ChannelID, PollID] = {}
 
