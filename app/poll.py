@@ -249,6 +249,8 @@ class Poll(Cog):
 
         await channel.send(embed=results_embed)
         
+        self.clear_poll()
+        
         if bypass:
            await self.wait_until(86400)  # Wait for one day before checking again
         
@@ -269,27 +271,30 @@ class Poll(Cog):
         """
         while not self.bot.is_closed():
             next_saturday = None
+            
+            message = None
+            poll_channel = None
+            
+            poll_channel, message = await self.check_existing_poll_message()
 
-            if not bypass:
+            if not bypass and message is None:
                 INFO_LOG("Checking for Spooky Saturday... " +
                     str(datetime.date.today().weekday()))
-
+                
                 wait_time = await self.get_wait_time("Monday", log_message="next poll")
                 await self.wait_until(wait_time[1])
 
                 today = datetime.date.today()
                 next_saturday = today + datetime.timedelta((5 - today.weekday() + 7) % 7)
+            elif message is not None:
+                DEBUG_LOG("Existing Poll Message Found Skipping Poll Message date-time Check...")
             else:
-                DEBUG_LOG("Bypassing date-time Check...")
+                DEBUG_LOG("Bypassing Poll Message date-time Check...")
 
-            message = None
-            poll_channel = None
 
-            poll_channel, message = await self.check_existing_poll_message()
             if message is None:
                 poll_channel, message = await self.send_new_poll_message(next_saturday)
-
-            self.save_poll()
+                self.save_poll()
 
             _, result_wait_time = await self.get_wait_time("Saturday", 20, log_message="next poll results")
             await self.automatic_check_poll_results(bypass=bypass, wait_time=result_wait_time)
@@ -372,6 +377,21 @@ class Poll(Cog):
 
         except IOError as e:
             ERROR_LOG(f"Error saving poll data: {e}")
+        except TypeError as e:
+            ERROR_LOG(f"Error serializing poll data: {e}")
+        except ValueError as e:
+            ERROR_LOG(f"Error parsing JSON: {e}")
+        except Exception as e:
+            ERROR_LOG(f"An unexpected error occurred: {e}")
+
+    def clear_poll(self) -> None:
+        """Clears poll data in polls.json"""
+        try:
+            with open("./app/saves/polls.json", "w") as f:
+                json.dump({}, f)
+                SUCCESS_LOG("Poll data cleared successfully")
+        except IOError as e:
+            ERROR_LOG(f"Error clearing poll data: {e}")
         except TypeError as e:
             ERROR_LOG(f"Error serializing poll data: {e}")
         except ValueError as e:
